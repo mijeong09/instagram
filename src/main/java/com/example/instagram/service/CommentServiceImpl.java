@@ -1,6 +1,6 @@
 package com.example.instagram.service;
 
-import com.example.instagram.dto.request.CommentCreateRequest;
+import com.example.instagram.dto.request.CommentRequest;
 import com.example.instagram.dto.response.CommentResponse;
 import com.example.instagram.entity.Post;
 import com.example.instagram.entity.User;
@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.instagram.entity.Comment;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,18 +27,25 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public CommentResponse create(
             Long postId,
-            CommentCreateRequest commentCreateRequest,
+            CommentRequest commentRequest,
             Long userId) {
         Post post = postService.findById(postId);
         User user = userService.findById(userId);
 
         Comment comment = Comment.builder()
-                .content(commentCreateRequest.getContent())
+                .content(commentRequest.getContent())
                 .post(post)
                 .user(user)
                 .build();
 
         Comment saved = commentRepository.save(comment);
         return CommentResponse.from(saved);
+    }
+
+    @Override
+    public List<CommentResponse> getComments(Long postId) {
+        return commentRepository.findByPostIdOrderByCreatedAtDesc(postId).stream()
+                .map(CommentResponse::from)
+                .collect(Collectors.toList());
     }
 }
